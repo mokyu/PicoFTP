@@ -77,9 +77,11 @@ void ftpCommands(client_t *client, char* token) {
                 snprintf(bufferOffset, bufferMaxOffset, "500 unknown command\r\n");
                 break;
         }
+
     }
     free(command);
 }
+
 
 struct command_t* commandParser(char* responseToken) {
     command_t *command = malloc(sizeof (*command));

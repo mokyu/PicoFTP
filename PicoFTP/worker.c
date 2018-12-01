@@ -71,7 +71,6 @@ void *clientHandler(void *args) {
                 }
                 write(client->fd, client->outBuffer, BUFFER_SIZE);
                 // write our result to the client
-
                 break;
             } else {
                 continue;
