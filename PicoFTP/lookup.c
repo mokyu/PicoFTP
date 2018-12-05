@@ -32,7 +32,7 @@ ftp_command lookupCommand(char* buffer) {
     if (!strcmp(&command[0], "AUTH")) {
         return FTP_AUTH_COMMAND;
     }
-    if (!strcmp(&command[0], "PWD ")) {
+    if (!strcmp(&command[0], "PWD")) {
         return FTP_PWD_COMMAND;
     }
     if (!strcmp(&command[0], "USER")) {
@@ -44,8 +44,14 @@ ftp_command lookupCommand(char* buffer) {
     if (!strcmp(&command[0], "SYST")) {
         return FTP_SYST_COMMAND;
     }
-    if (!strcmp(&command[0], "SYST")) {
-        return FTP_SYST_COMMAND;
+    if (!strcmp(&command[0], "PASV")) {
+        return FTP_PASV_COMMAND;
     }
+    if (!strcmp(&command[0], "LIST")) {
+        return FTP_LIST_COMMAND;
+    }
+    if (!strcmp(&command[0], "TYPE")) {
+        return FTP_TYPE_COMMAND;
+    } 
     return FTP_UNKNOWN_COMMAND;
-};
+}

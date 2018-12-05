@@ -40,14 +40,19 @@ extern "C" {
     void ftpCommands(client_t *client, char* token);
 
     typedef struct passive_t {
-        int fd;
+        int passiveFd;
+        int portnum;
         struct sockaddr_in addr;
     } passive_t;
 
     typedef struct state_t {
+        int PASV;
+        int PASVConnected;
+        int clientFd;
         int loggedIn;
+        char transferMode;
         char userName[32];
-        struct passive_t* ports;
+        struct passive_t* port;
         char working_dir[255];
     } state_t;
 
@@ -58,6 +63,9 @@ extern "C" {
         FTP_UNKNOWN_COMMAND,
         FTP_PASS_COMMAND,
         FTP_SYST_COMMAND,
+        FTP_PASV_COMMAND,
+        FTP_LIST_COMMAND,
+        FTP_TYPE_COMMAND,
     } ftp_command;
 
 

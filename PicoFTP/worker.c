@@ -38,6 +38,19 @@ void *clientHandler(void *args) {
     struct client_t *client = (struct client_t*) args;
     client->state = malloc(sizeof (state_t));
     client->state->loggedIn = 0;
+    client->state->port = NULL;
+    client->state->PASV = 0;
+    client->state->PASVConnected = 0;
+    printf("%s\n", client->config->ip);
+    // make ip string PASV friendly.
+
+    for (int i = 0; i < strlen(client->config->ip); i++) {
+        if (client->config->ip[i] == '.') {
+            client->config->ip[i] = ',';
+        }
+
+    }
+    //client->state->working_dir = "";
     pthread_detach(pthread_self());
     printf("New connection accepted: %s:%u\n", inet_ntoa(client->addr.sin_addr), (unsigned int) ntohs(client->addr.sin_port));
 
@@ -76,9 +89,23 @@ void *clientHandler(void *args) {
                 continue;
             }
         }
-        memset(client->inBuffer, 0, BUFFER_SIZE);
-        memset(client->outBuffer, 0, BUFFER_SIZE);
+        // Did we enter passive mode, if so wait for client to connect.
+        if (client->state->PASV && !client->state->PASVConnected) {
+            printf("Waiting for data connection...\n");
+            while (1) {
+                client->state->clientFd = accept(client->state->port->passiveFd, (struct sockaddr*) NULL, NULL);
+                if (client->state->clientFd == -1) {
+                    printf("fail\n");
+                    continue;
+                } else {
+                    client->state->PASVConnected = 1;
+                    printf("Data connected...\n");
+                    break;
+                }
+            }
+        }
+
     }
     freeListener((listener_t*) client);
     pthread_exit(0);
-}        
+}

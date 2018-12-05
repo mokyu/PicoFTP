@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 Mokyu.
+ * Copyright 2018 parallels.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,26 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+/* 
+ * File:   io.h
+ * Author: parallels
+ *
+ * Created on December 4, 2018, 1:22 PM
+ */
+
+#ifndef IO_H
+#define IO_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    typedef struct config_t{
-        unsigned short port;
-        char* ftpRoot;
-        char ip[16];
-    }config_t;
+
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CONFIG_H */
+#endif /* IO_H */
 

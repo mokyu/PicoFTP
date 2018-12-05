@@ -1,2 +1,6 @@
-# PicoFTP
-Hey look it's yet another FTP server
+PicoFTP
+======
+A quick and dirty file server.
+------
+[Grab the latest build](https://jenkins.loser.moe)
+

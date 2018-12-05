@@ -36,6 +36,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/ftp.o \
+	${OBJECTDIR}/io.o \
 	${OBJECTDIR}/lookup.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/server.o \
@@ -70,6 +71,11 @@ ${OBJECTDIR}/ftp.o: ftp.c
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ftp.o ftp.c
+
+${OBJECTDIR}/io.o: io.c
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/io.o io.c
 
 ${OBJECTDIR}/lookup.o: lookup.c
 	${MKDIR} -p ${OBJECTDIR}
