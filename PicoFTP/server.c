@@ -35,11 +35,12 @@
 #include "server.h"
 #include "config.h"
 #include "worker.h"
+#include "ftp.h"
 struct listener_t* createListener(struct config_t* config, int isClient);
 void freeListener(listener_t* listener);
 
 void listener(struct config_t *config) {
-    printf("Starting listener on port %u.\nUsing FTP root folder: %s\n", (unsigned int) config->port, config->path);
+    printf("Starting listener %s:%u\nUsing FTP root folder: %s\n", config->ip, (unsigned int) config->port, config->ftpRoot);
     struct listener_t* server = createListener(config, 0);
     pthread_t workerThread;
 
@@ -57,7 +58,7 @@ void listener(struct config_t *config) {
         freeListener(server);
         exit(errno);
     }
-    if (listen(server->fd, config->port) != 0) {
+    if (listen(server->fd, 10) != 0) {
         printf("Failed to listen to socket. Are we trying to listen on a privileged port?\n");
         freeListener(server);
         exit(errno);
@@ -68,7 +69,7 @@ void listener(struct config_t *config) {
 
         int len = sizeof (client->addr);
 
-        if ((client->fd = accept(server->fd, (struct sockaddr*) &client->addr, &len)) == -1) {
+        if ((client->fd = accept(server->fd, (struct sockaddr*) &client->addr, (socklen_t *) & len)) == -1) {
             freeListener((listener_t*) client);
             continue;
         }
@@ -78,6 +79,7 @@ void listener(struct config_t *config) {
             freeListener((listener_t *) client);
             exit(errno);
         }
+        sleep(1);
     }
     pthread_join(workerThread, NULL);
     pthread_exit(NULL);
@@ -87,9 +89,10 @@ void listener(struct config_t *config) {
 
 struct listener_t* createListener(struct config_t* config, int isClient) {
     struct listener_t *listener = malloc(sizeof (listener_t));
-    memset(listener, 0, sizeof(listener_t));
+    memset(listener, 0, sizeof (listener_t));
     listener->bufferLen = BUFFER_SIZE + 1;
     listener->sockLen = sizeof (listener->addr);
+    listener->config = config;
     if (isClient) {
         return listener;
     }
@@ -109,7 +112,11 @@ struct listener_t* createListener(struct config_t* config, int isClient) {
 
 void freeListener(listener_t* listener) {
     close(listener->fd);
+    if (listener->state != NULL) {
+        free(listener->state->port);
+    }
     free(listener->state);
+    free(listener->config);
     free(listener);
     return;
 }

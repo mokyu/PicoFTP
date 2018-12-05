@@ -36,6 +36,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/ftp.o \
+	${OBJECTDIR}/io.o \
 	${OBJECTDIR}/lookup.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/server.o \
@@ -43,7 +44,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer
+CFLAGS=-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer -Wall -pedantic
 
 # CC Compiler Flags
 CCFLAGS=
@@ -70,6 +71,11 @@ ${OBJECTDIR}/ftp.o: ftp.c
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ftp.o ftp.c
+
+${OBJECTDIR}/io.o: io.c
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/io.o io.c
 
 ${OBJECTDIR}/lookup.o: lookup.c
 	${MKDIR} -p ${OBJECTDIR}

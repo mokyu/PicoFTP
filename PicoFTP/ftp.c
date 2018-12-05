@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <resolv.h>
 #include <arpa/inet.h>
@@ -40,6 +41,8 @@ typedef struct command_t {
 } command_t;
 
 struct command_t* commandParser(char* token);
+
+void bindDataPort(client_t *client);
 
 void ftpCommands(client_t *client, char* token) {
     char* bufferOffset = &client->outBuffer[strlen(client->outBuffer)];
@@ -65,23 +68,48 @@ void ftpCommands(client_t *client, char* token) {
                 break;
 
         }
-    } else {
+    }
+    if (client->state->PASV) {
         switch (command->command) {
-            case FTP_PWD_COMMAND:
-                snprintf(bufferOffset, bufferMaxOffset, "500 Unsupported command\r\n");
-                break;
-            case FTP_SYST_COMMAND:
-                snprintf(bufferOffset, bufferMaxOffset - strlen(client->outBuffer), "215 UNIX type: L8\r\n");
+            case FTP_LIST_COMMAND:
+                printf("we got a list\n");
                 break;
             default:
-                snprintf(bufferOffset, bufferMaxOffset, "500 unknown command\r\n");
                 break;
         }
+    }
+    switch (command->command) {
+        case FTP_PWD_COMMAND:
+            snprintf(bufferOffset, bufferMaxOffset, "257 \"/\"\r\n");
+            break;
+        case FTP_SYST_COMMAND:
+            snprintf(bufferOffset, bufferMaxOffset - strlen(client->outBuffer), "215 UNIX type: L8\r\n");
+            break;
+        case FTP_PASV_COMMAND:
+            bindDataPort(client);
+            snprintf(bufferOffset, bufferMaxOffset - strlen(client->outBuffer), "227 Entering Passive Mode (%s,%d,%d).\r\n", client->config->ip, client->state->port->portnum >> 8, client->state->port->portnum & 0x00FF);
+            client->state->PASV = 1;
+            break;
+        case FTP_TYPE_COMMAND:
+            if (command->argv[1][0] == 'I') {
+                client->state->transferMode = 'I';
+                snprintf(bufferOffset, bufferMaxOffset, "200 Switching to Binary mode.\r\n");
+            } else if (command->argv[1][0] == 'A') {
+                client->state->transferMode = 'A';
+                snprintf(bufferOffset, bufferMaxOffset, "200 Switching to ASCII mode.\r\n");
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Unsupported command\r\n");
+            }
+            break;
+        default:
+            break;
+    }
 
+    if (strlen(client->outBuffer) == 0) {
+        snprintf(bufferOffset, bufferMaxOffset, "500 Unknown command\r\n");
     }
     free(command);
 }
-
 
 struct command_t* commandParser(char* responseToken) {
     command_t *command = malloc(sizeof (*command));
@@ -96,4 +124,26 @@ struct command_t* commandParser(char* responseToken) {
         command->argc++;
     }
     return command;
+}
+
+void bindDataPort(client_t *client) {
+    srand(time(NULL));
+    int port = rand() % (0xFFFF - 32768) + 32768;
+    printf("port: %d\n", port);
+    // free old pointer in case we had one.
+    free(client->state->port);
+    client->state->port = malloc(sizeof (passive_t));
+    passive_t *conn = client->state->port;
+    conn->portnum = port;
+    conn->passiveFd = socket(AF_INET, SOCK_STREAM, 0);
+    conn->addr.sin_family = AF_INET;
+    conn->addr.sin_addr.s_addr = INADDR_ANY;
+    conn->addr.sin_port = htons(port);
+    if (bind(conn->passiveFd, (struct sockaddr*) &conn->addr, sizeof (conn->addr)) != 0) {
+        printf("Failed to bind to port...\n");
+    }
+    if (listen(conn->passiveFd, 10) != 0) {
+        //failed to get port.. arf.
+        bindDataPort(client);
+    }
 }

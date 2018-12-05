@@ -50,6 +50,7 @@ extern "C" {
         int sockLen;
         int bufferLen;
         struct state_t *state;
+        struct config_t *config;
     } listener_t;
 
     typedef struct client_t {
@@ -60,6 +61,7 @@ extern "C" {
         int sockLen;
         int bufferLen;
         struct state_t *state;
+        struct config_t *config;
     } client_t;
 
     void listener(struct config_t *config);

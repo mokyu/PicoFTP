@@ -31,29 +31,35 @@
 void print_usage(void);
 
 int main(int argc, char** argv) {
-    struct config_t config;
-    memset(&config, 0, sizeof (config_t));
-    config.port = 20;
-    config.path = "/";
-    config.buffer = 1024;
+    struct config_t *config = malloc(sizeof(config_t));
+    memset(config, 0, sizeof (config_t));
+    config->port = 21;
+    config->ftpRoot = "./";
     int opt;
-    while ((opt = getopt(argc, argv, "p:d:")) != -1) {
+    while ((opt = getopt(argc, argv, "p:d:a:")) != -1) {
         switch (opt) {
             case 'd':
-                config.path = optarg;
+                config->ftpRoot = optarg;
                 break;
             case 'p':
-                config.port = (unsigned short) atoi(optarg);
+                config->port = (unsigned short) atoi(optarg);
+                break;
+            case 'a':
+                strncpy(config->ip, optarg, 15);
                 break;
             default:
-                print_usage(); 
+                print_usage();
                 exit(EXIT_FAILURE);
         }
     }
-    listener(&config);
+    if(strlen(config->ip) <= 2) {
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+    listener(config);
     return (EXIT_SUCCESS);
 }
 
 void print_usage(void) {
-    printf("Expected argument(s): -p <port number> -d <relative/full path to ftp root>\n");
+    printf("Expected argument(s):\n-a <ip address> (Mandatory)\n-p <port number>\n-d <relative/full path to ftp root>\n");
 }

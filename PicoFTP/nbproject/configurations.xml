@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>config.h</itemPath>
       <itemPath>ftp.h</itemPath>
+      <itemPath>io.h</itemPath>
       <itemPath>lookup.h</itemPath>
       <itemPath>server.h</itemPath>
       <itemPath>worker.h</itemPath>
@@ -18,6 +19,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>ftp.c</itemPath>
+      <itemPath>io.c</itemPath>
       <itemPath>lookup.c</itemPath>
       <itemPath>main.c</itemPath>
       <itemPath>server.c</itemPath>
@@ -45,7 +47,7 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer</commandLine>
+          <commandLine>-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer -Wall -pedantic</commandLine>
         </cTool>
       </compileType>
       <item path="config.h" ex="false" tool="3" flavor2="0">
@@ -53,6 +55,10 @@
       <item path="ftp.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="ftp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="io.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="io.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lookup.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -94,6 +100,10 @@
       <item path="ftp.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="ftp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="io.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="io.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lookup.c" ex="false" tool="0" flavor2="0">
       </item>
