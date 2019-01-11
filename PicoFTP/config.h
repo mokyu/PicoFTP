@@ -28,10 +28,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "linux/limits.h"
+    
     typedef struct config_t{
         unsigned short port;
-        char* ftpRoot;
+        char path[PATH_MAX];
         char ip[16];
     }config_t;
 

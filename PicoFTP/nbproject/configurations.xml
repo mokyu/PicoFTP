@@ -4,10 +4,11 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>client.h</itemPath>
       <itemPath>config.h</itemPath>
       <itemPath>ftp.h</itemPath>
-      <itemPath>io.h</itemPath>
       <itemPath>lookup.h</itemPath>
+      <itemPath>path.h</itemPath>
       <itemPath>server.h</itemPath>
       <itemPath>worker.h</itemPath>
     </logicalFolder>
@@ -18,10 +19,11 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>client.c</itemPath>
       <itemPath>ftp.c</itemPath>
-      <itemPath>io.c</itemPath>
       <itemPath>lookup.c</itemPath>
       <itemPath>main.c</itemPath>
+      <itemPath>path.c</itemPath>
       <itemPath>server.c</itemPath>
       <itemPath>worker.c</itemPath>
     </logicalFolder>
@@ -29,6 +31,12 @@
                    displayName="Test Files"
                    projectFiles="false"
                    kind="TEST_LOGICAL_FOLDER">
+      <logicalFolder name="f2"
+                     displayName="Path tests"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/c_path.c</itemPath>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -47,18 +55,31 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer -Wall -pedantic</commandLine>
+          <commandLine>-pthread -g -O0 -ggdb3 -fstack-check -fstack-protector-all -fno-omit-frame-pointer -Wall -pedantic -lcunit -fvar-tracking -fvar-tracking-assignments</commandLine>
         </cTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerOptionItem>`pkg-config --libs cunit`</linkerOptionItem>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
+      <item path="client.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="client.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="config.h" ex="false" tool="3" flavor2="0">
       </item>
+      <folder path="TestFiles/f2">
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f2</output>
+          <linkerLibItems>
+            <linkerOptionItem>-lcunit</linkerOptionItem>
+          </linkerLibItems>
+        </linkerTool>
+      </folder>
       <item path="ftp.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="ftp.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="io.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="io.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lookup.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -66,9 +87,15 @@
       </item>
       <item path="main.c" ex="false" tool="0" flavor2="0">
       </item>
+      <item path="path.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="path.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="server.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="server.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="tests/c_path.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="worker.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -95,15 +122,23 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="client.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="client.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="config.h" ex="false" tool="3" flavor2="0">
       </item>
+      <folder path="TestFiles/f2">
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f2</output>
+          <linkerLibItems>
+            <linkerOptionItem>-lcunit</linkerOptionItem>
+          </linkerLibItems>
+        </linkerTool>
+      </folder>
       <item path="ftp.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="ftp.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="io.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="io.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lookup.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -111,9 +146,15 @@
       </item>
       <item path="main.c" ex="false" tool="0" flavor2="0">
       </item>
+      <item path="path.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="path.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="server.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="server.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="tests/c_path.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="worker.c" ex="false" tool="0" flavor2="0">
       </item>

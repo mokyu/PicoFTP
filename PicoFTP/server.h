@@ -39,8 +39,8 @@ extern "C" {
 #include "config.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
-    
+#include "linux/limits.h"
+#include "path.h"
 #define BUFFER_SIZE 2047
     typedef struct listener_t {
         int fd; // Socket file description

@@ -25,22 +25,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "path.h"
 #include "config.h"
 #include "server.h"
-
+#include "linux/limits.h"
 void print_usage(void);
 
 int main(int argc, char** argv) {
     struct config_t *config = malloc(sizeof(config_t));
-    memset(config, 0, sizeof (config_t));
     config->port = 21;
-    config->ftpRoot = "./";
     int opt;
     while ((opt = getopt(argc, argv, "p:d:a:")) != -1) {
         switch (opt) {
             case 'd':
-                config->ftpRoot = optarg;
+            {
+                char buf[PATH_MAX];
+                realpath(optarg, buf);
+                snprintf(config->path, PATH_MAX, "%s", buf);
                 break;
+            }
             case 'p':
                 config->port = (unsigned short) atoi(optarg);
                 break;
@@ -54,7 +57,13 @@ int main(int argc, char** argv) {
     }
     if(strlen(config->ip) <= 2) {
         print_usage();
+        free(config);
         exit(EXIT_FAILURE);
+    }
+    if(strlen(config->path) == 0) {
+        char buff[PATH_MAX];
+        realpath("./", buff);
+        snprintf(config->path, PATH_MAX, "%s", buff);
     }
     listener(config);
     return (EXIT_SUCCESS);

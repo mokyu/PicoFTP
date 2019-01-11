@@ -36,14 +36,15 @@
 
 void *clientHandler(void *args) {
     struct client_t *client = (struct client_t*) args;
+
     client->state = malloc(sizeof (state_t));
     client->state->loggedIn = 0;
     client->state->port = NULL;
     client->state->PASV = 0;
     client->state->PASVConnected = 0;
-    printf("%s\n", client->config->ip);
-    // make ip string PASV friendly.
+    client->state->path = path_build(client->config->path);
 
+    // convert ip to PASV syntax as we need it no longer
     for (int i = 0; i < strlen(client->config->ip); i++) {
         if (client->config->ip[i] == '.') {
             client->config->ip[i] = ',';
@@ -52,7 +53,7 @@ void *clientHandler(void *args) {
     }
     //client->state->working_dir = "";
     pthread_detach(pthread_self());
-    printf("New connection accepted: %s:%u\n", inet_ntoa(client->addr.sin_addr), (unsigned int) ntohs(client->addr.sin_port));
+    printf("New incoming connection: %s:%u\n", inet_ntoa(client->addr.sin_addr), (unsigned int) ntohs(client->addr.sin_port));
 
     snprintf(client->outBuffer, BUFFER_SIZE, "220 Welcome to PicoFTP\r\n");
     write(client->fd, client->outBuffer, BUFFER_SIZE);
@@ -80,6 +81,7 @@ void *clientHandler(void *args) {
                 for (token = strtok_r(client->inBuffer, "\n\r", &savePtr);
                         token != NULL;
                         token = strtok_r(NULL, "\n\r", &savePtr)) {
+                    printf("Raw command:%s\n", token);
                     ftpCommands(client, token);
                 }
                 write(client->fd, client->outBuffer, BUFFER_SIZE);

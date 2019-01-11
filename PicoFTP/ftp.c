@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <resolv.h>
 #include <arpa/inet.h>
@@ -33,10 +34,13 @@
 #include "ftp.h"
 #include <string.h>
 #include "lookup.h"
+#include "client.h"
+#include "path.h"
 
 typedef struct command_t {
     ftp_command command;
-    char *argv[32];
+    char *argv[256];
+    char fullarg[1024];
     int argc;
 } command_t;
 
@@ -47,7 +51,9 @@ void bindDataPort(client_t *client);
 void ftpCommands(client_t *client, char* token) {
     char* bufferOffset = &client->outBuffer[strlen(client->outBuffer)];
     int bufferMaxOffset = BUFFER_SIZE - strlen(client->outBuffer);
-
+    char path[PATH_MAX];
+    path_toString(client->state->path, path, COMPLETE);
+    printf("DEBUG PATH: %s\n", path);
     command_t *command = commandParser(token);
     if (!client->state->loggedIn) {
         switch (command->command) {
@@ -65,25 +71,55 @@ void ftpCommands(client_t *client, char* token) {
                 break;
             default:
                 snprintf(bufferOffset, bufferMaxOffset, "530 Please login first\r\n");
-                break;
+                return;
 
         }
     }
     if (client->state->PASV) {
         switch (command->command) {
             case FTP_LIST_COMMAND:
-                printf("we got a list\n");
+                //
+            {
+                char* announce = "150 Here comes the directory listing\r\n";
+                char* end = "226 Transfer complete\r\n";
+                dirlist_t *listing = get_dirList(client);
+                write(client->fd, announce, strlen(announce));
+                write(client->state->clientFd, listing->list, strlen(listing->list));
+                close(client->state->clientFd);
+                client->state->PASVConnected = 0;
+                client->state->PASV = 0;
+                write(client->fd, end, strlen(end));
+                free(listing);
                 break;
+            }
             default:
                 break;
         }
     }
     switch (command->command) {
         case FTP_PWD_COMMAND:
-            snprintf(bufferOffset, bufferMaxOffset, "257 \"/\"\r\n");
+        {
+            char path[PATH_MAX];
+            path_toString(client->state->path, path, ROOTED);
+            snprintf(bufferOffset, bufferMaxOffset, "257 \"%s\"\r\n", path);
+            printf("PWD -> 257 \"%s\"\n", path);
             break;
+        }
+        case FTP_CWD_COMMAND:
+        {
+            if (command->argc > 0) {
+                if (changeDir(client, command->fullarg)) {
+                    snprintf(bufferOffset, bufferMaxOffset, "250 Okay\r\n");
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "550 Failed\r\n");
+                }
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
+            }
+            break;
+        }
         case FTP_SYST_COMMAND:
-            snprintf(bufferOffset, bufferMaxOffset - strlen(client->outBuffer), "215 UNIX type: L8\r\n");
+            snprintf(bufferOffset, bufferMaxOffset - strlen(client->outBuffer), "215 UNIX Type: L8\r\n");
             break;
         case FTP_PASV_COMMAND:
             bindDataPort(client);
@@ -91,14 +127,32 @@ void ftpCommands(client_t *client, char* token) {
             client->state->PASV = 1;
             break;
         case FTP_TYPE_COMMAND:
-            if (command->argv[1][0] == 'I') {
+            if (command->argc > 0 && command->argv[1][0] == 'I') {
                 client->state->transferMode = 'I';
                 snprintf(bufferOffset, bufferMaxOffset, "200 Switching to Binary mode.\r\n");
-            } else if (command->argv[1][0] == 'A') {
+            } else if (command->argc > 0 && command->argv[1][0] == 'A') {
                 client->state->transferMode = 'A';
                 snprintf(bufferOffset, bufferMaxOffset, "200 Switching to ASCII mode.\r\n");
             } else {
-                snprintf(bufferOffset, bufferMaxOffset, "500 Unsupported command\r\n");
+                snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
+            }
+            break;
+        case FTP_MKD_COMMAND:
+            if (command->argc > 0) {
+                if (command->argv[1][0] == '/') {
+                    snprintf(bufferOffset, bufferMaxOffset, "500 Unable to create absolute directory\r\n");
+                    break;
+                }
+                char path[PATH_MAX];
+                path_toString(client->state->path, path, COMPLETE);
+                snprintf(path + strlen(path), NAME_MAX - 1, "/%s", command->fullarg);
+                if (mkdir(path, 0777) != -1) {
+                    snprintf(bufferOffset, bufferMaxOffset, "257 Success.\r\n");
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "500 Unable to create.\r\n");
+                }
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
             }
             break;
         default:
@@ -115,8 +169,15 @@ struct command_t* commandParser(char* responseToken) {
     command_t *command = malloc(sizeof (*command));
     command->command = lookupCommand(responseToken);
     command->argc = 0;
+    int offset = 0;
+    if(responseToken[3] == ' '){
+        offset = 4;
+    }else {
+        offset = 5;
+    }
+    snprintf(command->fullarg, 1023, "%s", responseToken + offset );
     char *savePtr = NULL;
-    char *token;
+    char *token = NULL;
     for (token = strtok_r(responseToken, " ", &savePtr);
             token != NULL;
             token = strtok_r(NULL, " ", &savePtr)) {
