@@ -22,7 +22,40 @@
  * THE SOFTWARE.
  */
 
+/* 
+ * File:   client.h
+ * Author: parallels
+ *
+ * Created on December 14, 2018, 2:12 PM
+ */
 
-void generateDirectoryListing(char* path){
+#ifndef CLIENT_H
+#define CLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "server.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <linux/limits.h>
+    typedef struct {
+        char fullPath[PATH_MAX + 1];
+        char ftpPath[PATH_MAX + 1];
+    } directory_t;
+
+    typedef struct {
+        char list[0xFFFF];
+    } dirlist_t;
+
+    int changeDir(client_t* client, char* folder);
+    directory_t* getDir(client_t* client);
+    dirlist_t* get_dirList(client_t* client);
+    void createDirEntry(struct stat* file, struct dirent* dirEntry, char* buffer);
+    int leaveDir(client_t* client);
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* CLIENT_H */
+

@@ -52,6 +52,11 @@ ftp_command lookupCommand(char* buffer) {
     }
     if (!strcmp(&command[0], "TYPE")) {
         return FTP_TYPE_COMMAND;
-    } 
+    }
+    if (!strcmp(&command[0], "CWD ")) {
+        return FTP_CWD_COMMAND;
+    }if (!strcmp(&command[0], "MKD ")) {
+        return FTP_MKD_COMMAND;
+    }
     return FTP_UNKNOWN_COMMAND;
 }

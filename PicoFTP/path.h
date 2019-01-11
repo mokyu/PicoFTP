@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 parallels.
+ * Copyright 2019 parallels.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +23,46 @@
  */
 
 /* 
- * File:   io.h
+ * File:   path.h
  * Author: parallels
  *
- * Created on December 4, 2018, 1:22 PM
+ * Created on January 6, 2019, 7:51 PM
  */
 
-#ifndef IO_H
-#define IO_H
+#ifndef PATH_H
+#define PATH_H
+#include <linux/limits.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+    // FORWARD -> create a string with the current item as root
+    // BACKWARD -> create a string with the current item functioning as the limiter
+    // COMPLETE -> convert the whole list to a path regardless of where it starts or ends
 
+    typedef enum method_e {
+        FORWARD,
+        BACKWARD,
+        COMPLETE,
+        ROOTED
+    } method_e;
 
+    typedef struct path_t {
+        struct path_t *up;
+        struct path_t *down;
+        int rootFolder;
+        char name[NAME_MAX + 1];
+    } path_t;
 
-
+    void path_toString(path_t* link, char* buffer, method_e method);
+    void path_free(path_t* link);
+    path_t* path_build(char* path);
+    int path_cwd(path_t* path, char* folder);
+    path_t* path_getRoot(path_t* path);
+    path_t* path_getLast(path_t* path);
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* IO_H */
+#endif /* PATH_H */
 

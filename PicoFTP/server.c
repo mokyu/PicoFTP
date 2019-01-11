@@ -36,11 +36,13 @@
 #include "config.h"
 #include "worker.h"
 #include "ftp.h"
+#include "path.h"
+
 struct listener_t* createListener(struct config_t* config, int isClient);
 void freeListener(listener_t* listener);
 
 void listener(struct config_t *config) {
-    printf("Starting listener %s:%u\nUsing FTP root folder: %s\n", config->ip, (unsigned int) config->port, config->ftpRoot);
+    printf("Starting listener %s:%u\nUsing FTP root folder: %s\n", config->ip, (unsigned int) config->port, config->path);
     struct listener_t* server = createListener(config, 0);
     pthread_t workerThread;
 
@@ -113,10 +115,10 @@ struct listener_t* createListener(struct config_t* config, int isClient) {
 void freeListener(listener_t* listener) {
     close(listener->fd);
     if (listener->state != NULL) {
+        close(listener->state->clientFd);
         free(listener->state->port);
     }
     free(listener->state);
-    free(listener->config);
     free(listener);
     return;
 }

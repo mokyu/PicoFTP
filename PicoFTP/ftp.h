@@ -35,7 +35,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include <linux/limits.h>
+#include "path.h"
 
     void ftpCommands(client_t *client, char* token);
 
@@ -53,7 +54,7 @@ extern "C" {
         char transferMode;
         char userName[32];
         struct passive_t* port;
-        char working_dir[255];
+        path_t* path;
     } state_t;
 
     typedef enum {
@@ -66,6 +67,8 @@ extern "C" {
         FTP_PASV_COMMAND,
         FTP_LIST_COMMAND,
         FTP_TYPE_COMMAND,
+        FTP_CWD_COMMAND,
+        FTP_MKD_COMMAND,
     } ftp_command;
 
 
