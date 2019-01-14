@@ -57,6 +57,10 @@ ftp_command lookupCommand(char* buffer) {
         return FTP_CWD_COMMAND;
     }if (!strcmp(&command[0], "MKD ")) {
         return FTP_MKD_COMMAND;
+    }if (!strcmp(&command[0], "RNFR")) {
+        return FTP_RNFR_COMMAND;
+    }if (!strcmp(&command[0], "RNTO")) {
+        return FTP_RNTO_COMMAND;
     }
     return FTP_UNKNOWN_COMMAND;
 }

@@ -54,6 +54,7 @@ extern "C" {
         char name[NAME_MAX + 1];
     } path_t;
 
+    int path_verify(path_t* source, path_t* target);
     void path_toString(path_t* link, char* buffer, method_e method);
     void path_free(path_t* link);
     path_t* path_build(char* path);

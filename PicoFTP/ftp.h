@@ -55,6 +55,8 @@ extern "C" {
         char userName[32];
         struct passive_t* port;
         path_t* path;
+        char* renameFrom;
+        char* renameTo;
     } state_t;
 
     typedef enum {
@@ -69,6 +71,8 @@ extern "C" {
         FTP_TYPE_COMMAND,
         FTP_CWD_COMMAND,
         FTP_MKD_COMMAND,
+        FTP_RNFR_COMMAND,
+        FTP_RNTO_COMMAND,
     } ftp_command;
 
 

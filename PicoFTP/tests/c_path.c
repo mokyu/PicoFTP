@@ -131,13 +131,24 @@ void test3() {
     CU_ASSERT(path_cwd(path, "../invalid folder that totally does not exist") == 0);
     path_toString(path, buffer, COMPLETE);
     CU_ASSERT(strcmp(buffer, "/var/lib/apt/keyrings") == 0);
-    
+
     // test entering directory by just it's name
     path_cwd(path, "/apt");
     path_cwd(path, "keyrings");
     path_toString(path, buffer, COMPLETE);
     CU_ASSERT(strcmp(buffer, "/var/lib/apt/keyrings") == 0);
     printf("\npath: %s\n", buffer);
+}
+
+void test4() {
+    path_t* source = path_build("/var/lib");
+    path_t* t1 = path_build("/var/lib/apt");
+    path_t* t2 = path_build("/var/lib");
+    path_t* t3 = path_build("/var/opt");
+    CU_ASSERT(path_verify(source, t1) == 1);
+    CU_ASSERT(path_verify(source, t2) == 1);
+    CU_ASSERT(path_verify(source, t3) == 0);
+
 }
 
 int main() {
@@ -157,7 +168,8 @@ int main() {
     /* Add the tests to the suite */
     if ((NULL == CU_add_test(pSuite, "path to string", test1_toString)) ||
             (NULL == CU_add_test(pSuite, "Path creation", test2)) ||
-            (NULL == CU_add_test(pSuite, "Path manipulation", test3))) {
+            (NULL == CU_add_test(pSuite, "Path manipulation", test3)) ||
+            (NULL == CU_add_test(pSuite, "Path comparison", test4))) {
         CU_cleanup_registry();
         return CU_get_error();
     }

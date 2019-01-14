@@ -94,7 +94,6 @@ void path_toString(path_t* link, char* buffer, method_e method) {
     }
 }
 
-
 void path_free(path_t* link) {
     path_t* tag = link;
     path_t* old = NULL;
@@ -108,18 +107,14 @@ void path_free(path_t* link) {
 }
 
 path_t* path_build(char* path) {
-    DIR *dfd;
-    if ((dfd = opendir(path)) == NULL) {
-        // directory does not exist :/
-        closedir(dfd);
-        return NULL;
-    }
+    char str[PATH_MAX];
+    snprintf(str, PATH_MAX -1, "%s", path);
     // returns the last link of the path chain
     // sets last link of path to "root"
     path_t* currentdir = NULL;
     char *saved = NULL;
     char *token;
-    for (token = strtok_r(path, "/", &saved); token; token = strtok_r(NULL, "/", &saved)) {
+    for (token = strtok_r(str, "/", &saved); token; token = strtok_r(NULL, "/", &saved)) {
         if (currentdir == NULL) {
             currentdir = malloc(sizeof (path_t));
             snprintf(currentdir->name, NAME_MAX, "%s", token);
@@ -168,7 +163,7 @@ int path_cwd(path_t* path, char* change) {
         }
         if (path_extend(path, change)) {
             char data[PATH_MAX];
-            path_toString(path, data,COMPLETE);
+            path_toString(path, data, COMPLETE);
             closedir(dfd);
             return 1;
         }
@@ -207,7 +202,7 @@ int path_extend(path_t* path, char* addpath) {
             tag->up = updir;
             tag->rootFolder = 0;
             updir->down = tag;
-            tag->down= NULL;
+            tag->down = NULL;
             snprintf(tag->name, NAME_MAX, "%s", token);
         }
     }
@@ -254,4 +249,19 @@ path_t* path_getRoot(path_t* path) { // go up and then go down till we find the 
         }
     }
     return tag;
+}
+
+int path_verify(path_t* source, path_t* target) { // compare two paths, return 1 when the path is inside our root
+    path_t* s = path_getFirst(source);
+    path_t* t = path_getFirst(target);
+    int result = 0;
+    while (s != NULL && t != NULL) {
+        if (s->rootFolder == 1) {
+            if (strcmp(s->name, t->name) == 0) {
+                result = 1;
+            }
+        }
+
+    }
+    return result;
 }
