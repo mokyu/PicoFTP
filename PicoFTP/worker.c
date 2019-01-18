@@ -43,7 +43,8 @@ void *clientHandler(void *args) {
     client->state->PASV = 0;
     client->state->PASVConnected = 0;
     client->state->path = path_build(client->config->path);
-
+    client->state->renameFrom = NULL;
+    client->state->renameTo = NULL;
     // convert ip to PASV syntax as we need it no longer
     for (int i = 0; i < strlen(client->config->ip); i++) {
         if (client->config->ip[i] == '.') {

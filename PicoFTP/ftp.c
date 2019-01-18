@@ -53,7 +53,6 @@ void ftpCommands(client_t *client, char* token) {
     int bufferMaxOffset = BUFFER_SIZE - strlen(client->outBuffer);
     char path[PATH_MAX];
     path_toString(client->state->path, path, COMPLETE);
-    printf("DEBUG PATH: %s\n", path);
     command_t *command = commandParser(token);
     if (!client->state->loggedIn) {
         switch (command->command) {
@@ -137,7 +136,7 @@ void ftpCommands(client_t *client, char* token) {
                 snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
             }
             break;
-        case FTP_MKD_COMMAND:
+        case FTP_MKD_COMMAND: // fix with path_verify()
             if (command->argc > 0) {
                 if (command->argv[1][0] == '/') {
                     snprintf(bufferOffset, bufferMaxOffset, "500 Unable to create absolute directory\r\n");
@@ -155,6 +154,76 @@ void ftpCommands(client_t *client, char* token) {
                 snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
             }
             break;
+        case FTP_RNFR_COMMAND:
+            if (command->argc > 0) {
+                if (command->fullarg[0] == '/') { // is absolute path
+                    if (access(command->fullarg, F_OK) != -1) {
+                        path_t* test = path_build(command->fullarg);
+                        if (path_verify(client->state->path, test) == 1) {
+                            // the file is valid and within our root
+                            snprintf(bufferOffset, bufferMaxOffset, "350 Rename to?\r\n");
+                            if (client->state->renameFrom != NULL) {
+                                free(client->state->renameFrom);
+                                client->state->renameFrom = NULL;
+                            }
+                            char* from = malloc(PATH_MAX);
+                            snprintf(from, PATH_MAX - 1, "%s", command->fullarg);
+                            break;
+                        }
+                    }
+                } else {
+                    char str[PATH_MAX];
+                    path_toString(client->state->path, str, COMPLETE);
+                    char str2[PATH_MAX];
+                    snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
+                    if (access(str2, F_OK) != -1) {
+                        snprintf(bufferOffset, bufferMaxOffset, "350 Rename to?\r\n");
+                        if (client->state->renameFrom != NULL) {
+                            free(client->state->renameFrom);
+                            client->state->renameFrom = NULL;
+                        }
+                        client->state->renameFrom = malloc(PATH_MAX);
+                        snprintf(client->state->renameFrom, PATH_MAX - 1, "%s", str2);
+                        break;
+                    }
+                }
+                snprintf(bufferOffset, bufferMaxOffset, "500 Invalid file\r\n");
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
+            }
+            break;
+        case FTP_RNTO_COMMAND:
+            if (command->argc > 0 && client->state->renameFrom != NULL) {
+                if (command->fullarg[0] == '/') { // is absolute path
+                    path_t* test = path_build(command->fullarg);
+                    if (path_verify(client->state->path, test) == 1) {
+                        if (rename(client->state->renameFrom, command->fullarg) != 0) {
+                            snprintf(bufferOffset, bufferMaxOffset, "500 Failed to rename file\r\n");
+                        } else {
+                            snprintf(bufferOffset, bufferMaxOffset, "250 Success\r\n");
+                            free(client->state->renameFrom);
+                            client->state->renameFrom = NULL;
+                        }
+                    }
+                } else {
+                    char str[PATH_MAX];
+                    path_toString(client->state->path, str, COMPLETE);
+                    char str2[PATH_MAX];
+                    snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
+                    if (rename(client->state->renameFrom, str2) != 0) {
+                        snprintf(bufferOffset, bufferMaxOffset, "500 Failed to rename file\r\n");
+                    } else {
+                        snprintf(bufferOffset, bufferMaxOffset, "250 Success\r\n");
+                        free(client->state->renameFrom);
+                        client->state->renameFrom = NULL;
+                    }
+                }
+
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Please use RNFR first or missing parameter\r\n");
+            }
+            break;
+
         default:
             break;
     }
@@ -170,12 +239,12 @@ struct command_t* commandParser(char* responseToken) {
     command->command = lookupCommand(responseToken);
     command->argc = 0;
     int offset = 0;
-    if(responseToken[3] == ' '){
+    if (responseToken[3] == ' ') {
         offset = 4;
-    }else {
+    } else {
         offset = 5;
     }
-    snprintf(command->fullarg, 1023, "%s", responseToken + offset );
+    snprintf(command->fullarg, 1023, "%s", responseToken + offset);
     char *savePtr = NULL;
     char *token = NULL;
     for (token = strtok_r(responseToken, " ", &savePtr);
