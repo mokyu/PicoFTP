@@ -101,7 +101,6 @@ void ftpCommands(client_t *client, char* token) {
             char path[PATH_MAX];
             path_toString(client->state->path, path, ROOTED);
             snprintf(bufferOffset, bufferMaxOffset, "257 \"%s\"\r\n", path);
-            printf("PWD -> 257 \"%s\"\n", path);
             break;
         }
         case FTP_CWD_COMMAND:
@@ -144,6 +143,9 @@ void ftpCommands(client_t *client, char* token) {
                 }
                 char path[PATH_MAX];
                 path_toString(client->state->path, path, COMPLETE);
+                if (strcmp(path, "/") == 0) {
+                    path[0] = '\0';
+                }
                 snprintf(path + strlen(path), NAME_MAX - 1, "/%s", command->fullarg);
                 if (mkdir(path, 0777) != -1) {
                     snprintf(bufferOffset, bufferMaxOffset, "257 Success.\r\n");
@@ -175,6 +177,9 @@ void ftpCommands(client_t *client, char* token) {
                     char str[PATH_MAX];
                     path_toString(client->state->path, str, COMPLETE);
                     char str2[PATH_MAX];
+                    if (strcmp(str, "/") == 0) {
+                        str[0] = '\0';
+                    }
                     snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
                     if (access(str2, F_OK) != -1) {
                         snprintf(bufferOffset, bufferMaxOffset, "350 Rename to?\r\n");
@@ -208,6 +213,9 @@ void ftpCommands(client_t *client, char* token) {
                 } else {
                     char str[PATH_MAX];
                     path_toString(client->state->path, str, COMPLETE);
+                    if (strcmp(str, "/") == 0) {
+                        str[0] = '\0';
+                    }
                     char str2[PATH_MAX];
                     snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
                     if (rename(client->state->renameFrom, str2) != 0) {
@@ -223,7 +231,48 @@ void ftpCommands(client_t *client, char* token) {
                 snprintf(bufferOffset, bufferMaxOffset, "500 Please use RNFR first or missing parameter\r\n");
             }
             break;
-
+        case FTP_DELE_COMMAND:
+            if (command->argc > 0) {
+                char str[PATH_MAX];
+                path_toString(client->state->path, str, COMPLETE);
+                if (strcmp(str, "/") == 0) {
+                    str[0] = '\0';
+                }
+                char str2[PATH_MAX];
+                snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
+                if (access(str2, F_OK) != -1) {
+                    if (remove(str2) == 0) {
+                        snprintf(bufferOffset, bufferMaxOffset, "250 file deleted\r\n");
+                    } else {
+                        snprintf(bufferOffset, bufferMaxOffset, "450 Unable to comply, unknown error.\r\n");
+                    }
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "450 Unable to comply, file does not exist.\r\n");
+                }
+            } else {
+                snprintf(bufferOffset, bufferMaxOffset, "500 Missing argument\r\n");
+            }
+            break;
+        case FTP_RMD_COMMAND:
+            if (command->argc > 0) {
+                char str[PATH_MAX];
+                path_toString(client->state->path, str, COMPLETE);
+                if (strcmp(str, "/") == 0) {
+                    str[0] = '\0';
+                }
+                char str2[PATH_MAX];
+                snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
+                if (access(str2, F_OK) != -1) {
+                    if (rmdir(str2) == 0) {
+                        snprintf(bufferOffset, bufferMaxOffset, "250 directory deleted\r\n");
+                    } else {
+                        snprintf(bufferOffset, bufferMaxOffset, "450 Unable to comply, unknown error.\r\n");
+                    }
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "450 Unable to comply, Directory does not exist.\r\n");
+                }
+            }
+            break;
         default:
             break;
     }
@@ -234,7 +283,7 @@ void ftpCommands(client_t *client, char* token) {
     free(command);
 }
 
-struct command_t* commandParser(char* responseToken) {
+struct command_t * commandParser(char* responseToken) {
     command_t *command = malloc(sizeof (*command));
     command->command = lookupCommand(responseToken);
     command->argc = 0;
@@ -256,8 +305,7 @@ struct command_t* commandParser(char* responseToken) {
     return command;
 }
 
-void bindDataPort(client_t *client) {
-    srand(time(NULL));
+void bindDataPort(client_t * client) {
     int port = rand() % (0xFFFF - 32768) + 32768;
     printf("port: %d\n", port);
     // free old pointer in case we had one.
@@ -270,10 +318,10 @@ void bindDataPort(client_t *client) {
     conn->addr.sin_addr.s_addr = INADDR_ANY;
     conn->addr.sin_port = htons(port);
     if (bind(conn->passiveFd, (struct sockaddr*) &conn->addr, sizeof (conn->addr)) != 0) {
-        printf("Failed to bind to port...\n");
-    }
-    if (listen(conn->passiveFd, 10) != 0) {
-        //failed to get port.. arf.
+        printf("Failed to bind to port: %d, retrying\n", port);
+        close(conn->passiveFd);
+        bindDataPort(client);
+    } else if (listen(conn->passiveFd, 10) != 0) {
         bindDataPort(client);
     }
 }
