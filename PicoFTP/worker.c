@@ -82,7 +82,6 @@ void *clientHandler(void *args) {
                 for (token = strtok_r(client->inBuffer, "\n\r", &savePtr);
                         token != NULL;
                         token = strtok_r(NULL, "\n\r", &savePtr)) {
-                    printf("Raw command:%s\n", token);
                     ftpCommands(client, token);
                 }
                 write(client->fd, client->outBuffer, BUFFER_SIZE);

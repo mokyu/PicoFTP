@@ -55,12 +55,28 @@ ftp_command lookupCommand(char* buffer) {
     }
     if (!strcmp(&command[0], "CWD ")) {
         return FTP_CWD_COMMAND;
-    }if (!strcmp(&command[0], "MKD ")) {
+    }
+    if (!strcmp(&command[0], "MKD ")) {
         return FTP_MKD_COMMAND;
-    }if (!strcmp(&command[0], "RNFR")) {
+    }
+    if (!strcmp(&command[0], "RNFR")) {
         return FTP_RNFR_COMMAND;
-    }if (!strcmp(&command[0], "RNTO")) {
+    }
+    if (!strcmp(&command[0], "RNTO")) {
         return FTP_RNTO_COMMAND;
     }
+    if (!strcmp(&command[0], "RMD ")) {
+        return FTP_RMD_COMMAND;
+    }
+    if (!strcmp(&command[0], "DELE")) {
+        return FTP_DELE_COMMAND;
+    }
+    if (!strcmp(&command[0], "STOR")) {
+        return FTP_STOR_COMMAND;
+    }
+    if(!strcmp(&command[0], "RETR")) {
+        return FTP_RETR_COMMAND;
+    }
+    
     return FTP_UNKNOWN_COMMAND;
 }

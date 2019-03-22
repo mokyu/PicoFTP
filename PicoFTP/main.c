@@ -23,6 +23,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #include "path.h"
@@ -32,7 +33,7 @@
 void print_usage(void);
 
 int main(int argc, char** argv) {
-    struct config_t *config = malloc(sizeof(config_t));
+    struct config_t *config = malloc(sizeof (config_t));
     config->port = 21;
     int opt;
     while ((opt = getopt(argc, argv, "p:d:a:")) != -1) {
@@ -55,16 +56,17 @@ int main(int argc, char** argv) {
                 exit(EXIT_FAILURE);
         }
     }
-    if(strlen(config->ip) <= 2) {
+    if (strlen(config->ip) <= 2) {
         print_usage();
         free(config);
         exit(EXIT_FAILURE);
     }
-    if(strlen(config->path) == 0) {
+    if (strlen(config->path) == 0) {
         char buff[PATH_MAX];
         realpath("./", buff);
         snprintf(config->path, PATH_MAX, "%s", buff);
     }
+    srand(time(NULL));
     listener(config);
     return (EXIT_SUCCESS);
 }
