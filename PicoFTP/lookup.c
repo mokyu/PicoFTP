@@ -74,5 +74,9 @@ ftp_command lookupCommand(char* buffer) {
     if (!strcmp(&command[0], "STOR")) {
         return FTP_STOR_COMMAND;
     }
+    if(!strcmp(&command[0], "RETR")) {
+        return FTP_RETR_COMMAND;
+    }
+    
     return FTP_UNKNOWN_COMMAND;
 }

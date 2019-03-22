@@ -76,6 +76,7 @@ extern "C" {
         FTP_DELE_COMMAND,
         FTP_RMD_COMMAND,
         FTP_STOR_COMMAND,
+        FTP_RETR_COMMAND,
     } ftp_command;
 
 

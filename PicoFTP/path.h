@@ -41,10 +41,10 @@ extern "C" {
     // COMPLETE -> convert the whole list to a path regardless of where it starts or ends
 
     typedef enum method_e {
-        FORWARD,
-        BACKWARD,
-        COMPLETE,
-        ROOTED
+        FORWARD,    // generate path string from the specific link
+        BACKWARD,   // do the same but backward
+        COMPLETE,   // get the complete path
+        ROOTED      // get the path till the root link
     } method_e;
 
     typedef struct path_t {

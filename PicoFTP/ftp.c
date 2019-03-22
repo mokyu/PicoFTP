@@ -36,6 +36,7 @@
 #include "lookup.h"
 #include "client.h"
 #include "path.h"
+#include <sys/sendfile.h>
 
 typedef struct command_t {
     ftp_command command;
@@ -91,6 +92,130 @@ void ftpCommands(client_t *client, char* token) {
                 free(listing);
                 break;
             }
+            case FTP_STOR_COMMAND:
+            {
+                if (command->argc > 0) {
+                    // ignore everything and overwrite if it exists
+                    char path[PATH_MAX];
+                    if (command->fullarg[0] == '/') {
+                        path_t* test = path_build(command->fullarg);
+                        if (path_verify(client->state->path, test) == 1) { // our file path is legit, rejoice!
+                            char* ready = "226 Ready\r\n";
+                            write(client->fd, ready, strlen(ready));
+                            char tmppath[PATH_MAX];
+                            path_toString(client->state->path, tmppath, ROOTED);
+                            snprintf(path, PATH_MAX - 1, "%s/%s", tmppath, command->fullarg + 1);
+                        } else {
+                            snprintf(bufferOffset, bufferMaxOffset, "500 Invalid filename\r\n");
+                        }
+                        path_free(test);
+                    } else {
+                        char tmppath[PATH_MAX];
+                        path_toString(client->state->path, tmppath, COMPLETE);
+                        snprintf(path, PATH_MAX - 1, "%s/%s", tmppath, command->fullarg);
+                    }
+                    printf("PATH TEST: %s\n", path);
+                    FILE* fd = fopen(path, "w");
+                    while (1) {
+                        char buffer[4096];
+                        int bytesRead = read(client->state->clientFd, buffer, 4096);
+                        if (bytesRead == 0) {
+                            printf("Connection Closed\n");
+                            close(client->state->clientFd);
+                            client->state->PASVConnected = 0;
+                            client->state->PASV = 0;
+                            break;
+                        }
+                        if (bytesRead < 0 && errno == EAGAIN) {
+                            printf("empty buff??\n");
+                            continue;
+                        }
+                        if (bytesRead < 0) {
+                            printf("Transfer error\n");
+                            snprintf(bufferOffset, bufferMaxOffset, "500 Transfer error\r\n");
+                            break;
+                        }
+                        printf("b: %d\n", bytesRead);
+                        fwrite(buffer, sizeof(char), bytesRead, fd);
+                        //fseek(fd, bytesRead, SEEK_CUR);
+                    }
+                    fclose(fd);
+                    close(client->state->clientFd);
+                    client->state->PASVConnected = 0;
+                    client->state->PASV = 0;
+                    snprintf(bufferOffset, bufferMaxOffset, "226 File Transfer OK\r\n");
+
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
+                }
+                break;
+            }
+            case FTP_RETR_COMMAND:
+                if (command->argc > 0) {
+                    if (command->fullarg[0] == '/') { // is absolute path
+                        path_t* test = path_build(command->fullarg);
+                        if (path_verify(client->state->path, test) == 1) {
+                            // the file is valid and within our root
+                            char str1[PATH_MAX];
+                            char str2[PATH_MAX];
+                            path_toString(client->state->path, str1, ROOTED);
+                            snprintf(str2, PATH_MAX - 1, "%s/%s", str1, command->fullarg);
+                            FILE *file = fopen(str2, "r");
+                            if (file) {
+                                char* ready = "150 sending file\r\n";
+                                write(client->fd, ready, strlen(ready));
+                                char buffer[4096];
+                                int bytesRead;
+                                while ((bytesRead = fread(buffer, 1, sizeof (buffer), file)) > 0) {
+                                    write(client->state->clientFd, buffer, 4096);
+                                }
+                                fclose(file);
+                                close(client->state->clientFd);
+                                client->state->PASVConnected = 0;
+                                client->state->PASV = 0;
+                                snprintf(bufferOffset, bufferMaxOffset, "226 File Transfer OK\r\n");
+                            } else {
+                                snprintf(bufferOffset, bufferMaxOffset, "500 file does not exist\r\n");
+                            }
+                            break;
+                        }
+                    } else {// relative path
+                        char str[PATH_MAX];
+                        path_toString(client->state->path, str, COMPLETE);
+                        char str2[PATH_MAX];
+                        if (strcmp(str, "/") == 0) {
+                            str[0] = '\0';
+                        }
+                        snprintf(str2, PATH_MAX - 1, "%s/%s", str, command->fullarg);
+                        FILE *file = fopen(str2, "r");
+                        if (file) {
+                            char* ready = "150 sending file\r\n";
+                            write(client->fd, ready, strlen(ready));
+                            char buffer[4096];
+                            int bytesRead;
+                            while ((bytesRead = fread(buffer, 1, sizeof (buffer), file)) > 0) {
+                                write(client->state->clientFd, buffer, bytesRead);
+                            }
+                            fclose(file);
+                            close(client->state->clientFd);
+                            client->state->PASVConnected = 0;
+                            client->state->PASV = 0;
+                            snprintf(bufferOffset, bufferMaxOffset, "226 File Transfer OK\r\n");
+                        } else {
+                            snprintf(bufferOffset, bufferMaxOffset, "500 file does not exist\r\n");
+                        }
+                    }
+                    // check if the file exists
+                    // if the file exists send message to client
+                    // else return error
+                    // fill up buffer with file and send it until its sent complete
+                    // close connection, boom
+
+
+                } else {
+                    snprintf(bufferOffset, bufferMaxOffset, "500 Missing parameter\r\n");
+                }
+                break;
             default:
                 break;
         }
