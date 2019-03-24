@@ -40,8 +40,11 @@ extern "C" {
 #include "ftp.h"
 #include <string.h>
 
-ftp_command lookupCommand(char* buffer);
+    typedef struct cmd {
+        void (*func)(client_t*, arg_t*);
+    } cmd_t;
 
+    cmd_t* lookupCommand(char* buffer);
 
 #ifdef __cplusplus
 }

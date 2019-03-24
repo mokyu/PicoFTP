@@ -38,7 +38,28 @@ extern "C" {
 #include <linux/limits.h>
 #include "path.h"
 
-    void ftpCommands(client_t *client, char* token);
+    typedef struct arg_t {
+        char *argv[256];
+        char fullarg[1024];
+        int argc;
+    } arg_t;
+    void ftp_unknown_command(client_t *client, arg_t *args);
+    void ftp_user_command(client_t *client, arg_t *args);
+    void ftp_pass_command(client_t *client, arg_t *args);
+    void ftp_pwd_command(client_t *client, arg_t *args);
+    void ftp_cwd_command(client_t *client, arg_t *args);
+    void ftp_syst_command(client_t *client, arg_t *args);
+    void ftp_type_command(client_t *client, arg_t *args);
+    void ftp_mkd_command(client_t *client, arg_t *args);
+    void ftp_rmd_command(client_t *client, arg_t *args);
+    void ftp_rnfr_command(client_t *client, arg_t *args);
+    void ftp_rnto_command(client_t *client, arg_t *args);
+    void ftp_dele_command(client_t *client, arg_t *args);
+    void ftp_pasv_command(client_t *client, arg_t *args);
+    void ftp_list_command(client_t *client, arg_t *args);
+    void ftp_stor_command(client_t *client, arg_t *args);
+    void ftp_retr_command(client_t *client, arg_t *args);
+    void handleCommand(client_t *client, char* token);
 
     typedef struct passive_t {
         int passiveFd;
@@ -49,7 +70,7 @@ extern "C" {
     typedef struct state_t {
         int PASV;
         int PASVConnected;
-        int clientFd;
+        int dataSocket;
         int loggedIn;
         char transferMode;
         char userName[32];
@@ -58,27 +79,6 @@ extern "C" {
         char* renameFrom;
         char* renameTo;
     } state_t;
-
-    typedef enum {
-        FTP_AUTH_COMMAND,
-        FTP_USER_COMMAND,
-        FTP_PWD_COMMAND,
-        FTP_UNKNOWN_COMMAND,
-        FTP_PASS_COMMAND,
-        FTP_SYST_COMMAND,
-        FTP_PASV_COMMAND,
-        FTP_LIST_COMMAND,
-        FTP_TYPE_COMMAND,
-        FTP_CWD_COMMAND,
-        FTP_MKD_COMMAND,
-        FTP_RNFR_COMMAND,
-        FTP_RNTO_COMMAND,
-        FTP_DELE_COMMAND,
-        FTP_RMD_COMMAND,
-        FTP_STOR_COMMAND,
-        FTP_RETR_COMMAND,
-    } ftp_command;
-
 
 #ifdef __cplusplus
 }

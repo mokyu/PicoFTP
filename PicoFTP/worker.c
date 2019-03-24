@@ -56,12 +56,12 @@ void *clientHandler(void *args) {
     pthread_detach(pthread_self());
     printf("New incoming connection: %s:%u\n", inet_ntoa(client->addr.sin_addr), (unsigned int) ntohs(client->addr.sin_port));
 
-    snprintf(client->outBuffer, BUFFER_SIZE, "220 Welcome to PicoFTP\r\n");
-    write(client->fd, client->outBuffer, BUFFER_SIZE);
+    snprintf(client->outBuffer, BUFFER_SIZE, "220 Welcome to PicoFTP\n");
+    write(client->controlSocket, client->outBuffer, BUFFER_SIZE);
     while (1) {
         memset(client->inBuffer, 0, BUFFER_SIZE);
         memset(client->outBuffer, 0, BUFFER_SIZE);
-        int bytesRead = read(client->fd, client->inBuffer, BUFFER_SIZE);
+        int bytesRead = read(client->controlSocket, client->inBuffer, BUFFER_SIZE);
 
         if (bytesRead == 0) {
             printf("Connection Closed\n");
@@ -82,9 +82,9 @@ void *clientHandler(void *args) {
                 for (token = strtok_r(client->inBuffer, "\n\r", &savePtr);
                         token != NULL;
                         token = strtok_r(NULL, "\n\r", &savePtr)) {
-                    ftpCommands(client, token);
+                    handleCommand(client, token);
                 }
-                write(client->fd, client->outBuffer, BUFFER_SIZE);
+                write(client->controlSocket, client->outBuffer, BUFFER_SIZE);
                 // write our result to the client
                 break;
             } else {
@@ -95,8 +95,8 @@ void *clientHandler(void *args) {
         if (client->state->PASV && !client->state->PASVConnected) {
             printf("Waiting for data connection...\n");
             while (1) {
-                client->state->clientFd = accept(client->state->port->passiveFd, (struct sockaddr*) NULL, NULL);
-                if (client->state->clientFd == -1) {
+                client->state->dataSocket = accept(client->state->port->passiveFd, (struct sockaddr*) NULL, NULL);
+                if (client->state->dataSocket == -1) {
                     printf("fail\n");
                     continue;
                 } else {
