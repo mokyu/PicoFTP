@@ -71,7 +71,7 @@ void listener(struct config_t *config) {
 
         int len = sizeof (client->addr);
 
-        if ((client->fd = accept(server->fd, (struct sockaddr*) &client->addr, (socklen_t *) & len)) == -1) {
+        if ((client->controlSocket = accept(server->fd, (struct sockaddr*) &client->addr, (socklen_t *) & len)) == -1) {
             freeListener((listener_t*) client);
             continue;
         }
@@ -115,7 +115,7 @@ struct listener_t* createListener(struct config_t* config, int isClient) {
 void freeListener(listener_t* listener) {
     close(listener->fd);
     if (listener->state != NULL) {
-        close(listener->state->clientFd);
+        close(listener->state->dataSocket);
         free(listener->state->port);
     }
     free(listener->state);

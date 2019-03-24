@@ -54,7 +54,7 @@ extern "C" {
     } listener_t;
 
     typedef struct client_t {
-        int fd; // Socket file description
+        int controlSocket; // Socket file description
         struct sockaddr_in addr;
         char outBuffer[BUFFER_SIZE];
         char inBuffer[BUFFER_SIZE];

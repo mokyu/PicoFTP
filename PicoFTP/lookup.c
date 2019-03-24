@@ -23,60 +23,95 @@
  */
 #include "server.h"
 #include "ftp.h"
+#include "lookup.h"
 #include <string.h>
+#include <stdlib.h>
 
-ftp_command lookupCommand(char* buffer) {
+cmd_t* lookupCommand(char* buffer) {
     char command[5];
     memcpy(&command, buffer, 4);
     command[4] = '\0';
+    cmd_t *cmd = malloc(sizeof (arg_t));
+    /*
     if (!strcmp(&command[0], "AUTH")) {
         return FTP_AUTH_COMMAND;
     }
+     */
     if (!strcmp(&command[0], "PWD")) {
-        return FTP_PWD_COMMAND;
+        cmd->func = &ftp_pwd_command;
+        return cmd;
     }
+
     if (!strcmp(&command[0], "USER")) {
-        return FTP_USER_COMMAND;
+        cmd->func = &ftp_user_command;
+        return cmd;
     }
+
     if (!strcmp(&command[0], "PASS")) {
-        return FTP_PASS_COMMAND;
+        cmd->func = &ftp_pass_command;
+        return cmd;
     }
-    if (!strcmp(&command[0], "SYST")) {
-        return FTP_SYST_COMMAND;
-    }
-    if (!strcmp(&command[0], "PASV")) {
-        return FTP_PASV_COMMAND;
-    }
-    if (!strcmp(&command[0], "LIST")) {
-        return FTP_LIST_COMMAND;
-    }
-    if (!strcmp(&command[0], "TYPE")) {
-        return FTP_TYPE_COMMAND;
-    }
+
     if (!strcmp(&command[0], "CWD ")) {
-        return FTP_CWD_COMMAND;
+        cmd->func = &ftp_cwd_command;
+        return cmd;
     }
+
+    if (!strcmp(&command[0], "SYST")) {
+        cmd->func = &ftp_syst_command;
+        return cmd;
+    }
+
+    if (!strcmp(&command[0], "TYPE")) {
+        cmd->func = &ftp_type_command;
+        return cmd;
+    }
+
     if (!strcmp(&command[0], "MKD ")) {
-        return FTP_MKD_COMMAND;
+        cmd->func = &ftp_mkd_command;
+        return cmd;
     }
-    if (!strcmp(&command[0], "RNFR")) {
-        return FTP_RNFR_COMMAND;
-    }
-    if (!strcmp(&command[0], "RNTO")) {
-        return FTP_RNTO_COMMAND;
-    }
+
     if (!strcmp(&command[0], "RMD ")) {
-        return FTP_RMD_COMMAND;
+        cmd->func = &ftp_rmd_command;
+        return cmd;
     }
-    if (!strcmp(&command[0], "DELE")) {
-        return FTP_DELE_COMMAND;
-    }
-    if (!strcmp(&command[0], "STOR")) {
-        return FTP_STOR_COMMAND;
-    }
-    if(!strcmp(&command[0], "RETR")) {
-        return FTP_RETR_COMMAND;
+
+    if (!strcmp(&command[0], "RNFR")) {
+        cmd->func = &ftp_rnfr_command;
+        return cmd;
     }
     
-    return FTP_UNKNOWN_COMMAND;
+    if (!strcmp(&command[0], "RNTO")) {
+        cmd->func = &ftp_rnto_command;
+        return cmd;
+    }
+    
+    if (!strcmp(&command[0], "DELE")) {
+        cmd->func = &ftp_dele_command;
+        return cmd;
+    }
+
+    if (!strcmp(&command[0], "PASV")) {
+        cmd->func = &ftp_pasv_command;
+        return cmd;
+    }
+    
+    if (!strcmp(&command[0], "LIST")) {
+        cmd->func = &ftp_list_command;
+        return cmd;
+    }
+    
+    if (!strcmp(&command[0], "STOR")) {
+        cmd->func = &ftp_stor_command;
+        return cmd;
+    }
+    
+    if(!strcmp(&command[0], "RETR")) {
+        cmd->func = &ftp_retr_command;
+        return cmd;
+    }
+
+    cmd->func = &ftp_unknown_command;
+    return cmd;
 }
